@@ -154,6 +154,14 @@ class OpenAIResponses(Model):
         if self.client and not self.client.is_closed():
             return self.client
 
+        # If only async_client was pre-built, sync operations cannot be created
+        if self.async_client is not None:
+            raise ModelAuthenticationError(
+                message="Sync client unavailable: this model was initialized with only `async_client`. "
+                "Use `arun()` instead of `run()`, or provide a `client` parameter as well.",
+                model_name=self.name,
+            )
+
         client_params: Dict[str, Any] = self._get_client_params()
         if self.http_client is not None:
             client_params["http_client"] = self.http_client

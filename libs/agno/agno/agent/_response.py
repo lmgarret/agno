@@ -265,6 +265,14 @@ def reason(
         from copy import deepcopy
 
         reasoning_model = deepcopy(agent.model)
+        # Pre-built client objects carry live connection pools / asyncio state and
+        # cannot be meaningfully deepcopied.  The deepcopy is only needed to isolate
+        # model *config* mutations (e.g. reasoning_effort); sharing the same client
+        # instances is intentional — they are designed to be reused across calls.
+        for _attr in ("client", "async_client"):
+            _orig = getattr(agent.model, _attr, None)
+            if _orig is not None:
+                setattr(reasoning_model, _attr, _orig)
 
     # Create reasoning manager with config
     manager = ReasoningManager(
@@ -312,6 +320,14 @@ async def areason(
         from copy import deepcopy
 
         reasoning_model = deepcopy(agent.model)
+        # Pre-built client objects carry live connection pools / asyncio state and
+        # cannot be meaningfully deepcopied.  The deepcopy is only needed to isolate
+        # model *config* mutations (e.g. reasoning_effort); sharing the same client
+        # instances is intentional — they are designed to be reused across calls.
+        for _attr in ("client", "async_client"):
+            _orig = getattr(agent.model, _attr, None)
+            if _orig is not None:
+                setattr(reasoning_model, _attr, _orig)
 
     # Create reasoning manager with config
     manager = ReasoningManager(
