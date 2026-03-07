@@ -12,21 +12,24 @@ if TYPE_CHECKING:
 
 
 def is_openai_reasoning_model(reasoning_model: Model) -> bool:
+    reasoning_patterns = ("o4", "o3", "o1", "4.1", "4.5", "5.1", "5.2")
+
+    model_id_matches = any(pattern in reasoning_model.id for pattern in reasoning_patterns)
+
+    # For AzureOpenAI models, also check azure_deployment since the id may be a deployment name
+    # that doesn't contain the model version pattern
+    if not model_id_matches and reasoning_model.__class__.__name__ == "AzureOpenAI":
+        azure_deployment = getattr(reasoning_model, "azure_deployment", None)
+        if azure_deployment:
+            model_id_matches = any(pattern in azure_deployment for pattern in reasoning_patterns)
+
     return (
         (
             reasoning_model.__class__.__name__ == "OpenAIChat"
             or reasoning_model.__class__.__name__ == "OpenAIResponses"
             or reasoning_model.__class__.__name__ == "AzureOpenAI"
         )
-        and (
-            ("o4" in reasoning_model.id)
-            or ("o3" in reasoning_model.id)
-            or ("o1" in reasoning_model.id)
-            or ("4.1" in reasoning_model.id)
-            or ("4.5" in reasoning_model.id)
-            or ("5.1" in reasoning_model.id)
-            or ("5.2" in reasoning_model.id)
-        )
+        and model_id_matches
     ) or (isinstance(reasoning_model, OpenAILike) and "deepseek-r1" in reasoning_model.id.lower())
 
 
